@@ -1,5 +1,5 @@
 module.exports = {
-    host: process.env.MYSQL_URL,
+    host: process.env.CLEARDB_DATABASE_URL,
     // host: "http://187.45.196.222", IP do Banco de Dados
     dialect: "mysql",
     username: "valorize_db",
