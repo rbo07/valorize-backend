@@ -1,5 +1,5 @@
 module.exports = {
-    host: "http://valorize_db.mysql.dbaas.com.br",
+    host: process.env.MYSQL_URL,
     // host: "http://187.45.196.222", IP do Banco de Dados
     dialect: "mysql",
     username: "valorize_db",
