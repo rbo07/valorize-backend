@@ -38,7 +38,7 @@ router.post('/users/loginGoogle', UserController.loginGoogle); // Login Google o
 router.post('/register', upload.single('user_photo'), UserController.register);
 router.put('/users/logout', UserController.logout); // Desloga do Sistema
 
-// router.use(authMiddleware);
+router.use(authMiddleware);
 
 // Rotas CRUD Usuários
 router.get('/userLookUp', UserController.listUserLookUp);
