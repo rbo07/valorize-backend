@@ -1,11 +1,11 @@
 module.exports = {
    // host: process.env.CLEARDB_DATABASE_URL,
    // host: "http://187.45.196.222", IP do Banco de Dados
-    host: process.env.MYSQL_URL,
+    host: process.env.CLEARDB_DATABASE_URL,
     dialect: "mysql",
-    username: "valorize_db",
-    password: "db@valorize*07",
-    database: "valorize_db",
+    username: "baa6f81fbb6f42",
+    password: "116d857a",
+    database: "heroku_56fabe11fc4acdd",
     define: {
         timestamps: true,
         underscored: true,
