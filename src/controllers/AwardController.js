@@ -131,6 +131,22 @@ module.exports = {
         try {
             const { award_name, award_description, criterion_id, period_id } = req.body;
 
+            // Verifica se o critério associado já está associado a outro prêmio
+            if(criterion_id !== null){
+                let criterion = await Award.findOne({
+                    where: {
+                        criterion_id,
+                        status: true
+                    }
+                });
+                if(criterion !== null){
+                    return res.status(200).json({
+                        success: false,
+                        message: 'O Critério escolhido já está sendo utilizado! Favor selecione ou crie outro!'
+                    })
+                }
+            }
+            
             await Award.create({ award_name, award_description, criterion_id, period_id, status: true });
 
             return res.status(200).json({
@@ -218,6 +234,22 @@ module.exports = {
 
             const { award_name, award_description, criterion_id, period_id } = req.body;
             const { award_id } = req.params;
+
+            // Verifica se o critério associado já está associado a outro prêmio
+            if(criterion_id !== null){
+                const criterion = await Award.findOne({
+                    where: {
+                        criterion_id,
+                        status: true
+                    }
+                });
+                if(criterion !== null && criterion.id !== Number(award_id)){ 
+                    return res.status(200).json({
+                        success: false,
+                        message: 'O Critério escolhido já está sendo utilizado! Favor selecione ou crie outro!'
+                    })
+                }
+            }
 
             await Award.update({ award_name, award_description, criterion_id, period_id }, {
                 where: {
