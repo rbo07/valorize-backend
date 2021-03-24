@@ -1488,9 +1488,19 @@ module.exports = {
             }
             const parametros = setParams(user_photo)
 
-            // CRIPTOGRAFA A SENHA
-            const salt = bcrypt.genSaltSync();
-            const user_password = bcrypt.hashSync(password_user, salt);
+            function checkPassWord(data) {
+                if(data == '' || data == 'undefined'){
+                    return undefined
+                    
+                } else {
+                    // CRIPTOGRAFA A SENHA
+                    let salt = bcrypt.genSaltSync();
+                    let senha = bcrypt.hashSync(data, salt);
+                    return senha
+                }
+            }
+
+            const user_password = checkPassWord(password_user);
 
             // ATUALIZA NO BANCO
             const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, ...parametros }, {
@@ -1516,7 +1526,7 @@ module.exports = {
     async editUser(req, res) {
 
         try {
-            const { user_name, user_email, user_phone, user_address, role_id, team_id, team_current, role_current } = req.body;
+            const { user_name, user_email, user_phone, user_address, role_id, team_id, team_current, role_current, password_user } = req.body;
             const { user_id } = req.params;
 
             // 1 - Checar se vem Foto
@@ -1564,6 +1574,21 @@ module.exports = {
                 }
             }
 
+            function checkPassWord(data) {
+                if(data == '' || data == 'undefined'){
+                    return undefined
+
+                } else {
+                    // CRIPTOGRAFA A SENHA
+                    let salt = bcrypt.genSaltSync();
+                    let senha = bcrypt.hashSync(data, salt);
+                    return senha
+                }
+            }
+
+            const user_password = checkPassWord(password_user);
+
+
             // Verifica se é nulo para usar nos parametros de atualização ( UPDATE USER )
             const role_params = checkData(role_id)
 
@@ -1581,7 +1606,7 @@ module.exports = {
             // ////////// USUÁRIO SEM EQUIPE PERMANECE SEM EQUIPE ////////// //
             if (team == null && teamCurrent == null) {
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1594,7 +1619,7 @@ module.exports = {
             else if (team == teamCurrent && (role_access_current == 3 && role_access == 2 || role_access_current == null && role_access == 2)) {
 
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1612,7 +1637,7 @@ module.exports = {
             } else if (team == teamCurrent && (role_access_current == 2 && role_access == 3)) {
 
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1629,7 +1654,7 @@ module.exports = {
                 // ////////// USUÁRIO PERMANECE NA MESMA EQUIPE SEM MUDANÇA DE FUNÇÃO
             } else if (team == teamCurrent || team == null) {
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1641,7 +1666,7 @@ module.exports = {
                 // ////////// USUÁRIO MUDA DE EQUIPE SEM MUDANÇA DE FUNÇÃO OU ADERINDO A FUNÇÃO BÁSICA
             } else if (team !== teamCurrent && (role_access_current == null && role_access == null || role_access_current == 3 && role_access == 3 || role_access_current == null && role_access == 3)) {
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1662,7 +1687,7 @@ module.exports = {
             } else if (team !== teamCurrent && (role_access_current == 3 && role_access == 2 || role_access_current == null && role_access == 2)) {
 
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1688,7 +1713,7 @@ module.exports = {
             } else if (team !== teamCurrent && (role_access_current == 2 && role_access == 2)) {
 
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1719,7 +1744,7 @@ module.exports = {
             } else if (team !== teamCurrent && (role_access_current == 2 && role_access == 3)) {
 
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
@@ -1745,7 +1770,7 @@ module.exports = {
             } else {
 
                 // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_address, ...role_params, ...photo_params }, {
+                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
                     where: { id: user_id, status: true }
                 });
 
