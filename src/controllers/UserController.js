@@ -646,33 +646,6 @@ module.exports = {
             const lastPeriod = period.id
             const lastPeriodName = period.period_name
 
-            // Acha Critérios do Período Ativo
-            const criterionsLastPeriod = await Criterion.findAll({
-                where: { period_id: lastPeriod, status: true },
-                attributes: ['id', 'criterion_name']
-            });
-
-            if (criterionsLastPeriod == '' || criterionsLastPeriod == null) {
-                return res.status(200).json({
-                    success: 0,
-                    lastPeriodName,
-                    message: 'Nenhum Critério cadastrado para este período!'
-                })
-            }
-
-            // // Transforma em Array de IDs apenas
-            function setToIdCriterion() {
-                let size = criterionsLastPeriod.length
-                let criterionsId = []
-
-                for (var i = 0; i < size; i++) {
-                    criterionsId[i] = criterionsLastPeriod[i].id;
-                }
-                return criterionsId
-            }
-
-            const criterions = setToIdCriterion()
-
             // Acha o Team do Usuário
             const team = await Team.findOne({
                 where: { lider_id: user_id, status: true },
@@ -721,29 +694,27 @@ module.exports = {
             }
 
             // Verifica se avaliação já existe e retorna avaliação já cadastrada previamente
-            const usersEvaluated = []
             const usersAverages = []
 
-            for (i = 0; i < idUsers.length; i++) {
-                for (j = 0; j < criterions.length; j++) {
+            // let rating = await Rating.findAll({
+            const usersEvaluated = await Rating.findAll({
+                where: { user_evaluator_id: user_id, period_id: lastPeriod, status: true },
+                attributes: ['rating_score'],
+                include: [
+                    {
+                        attributes: ['id', 'user_name', 'user_photo'],
+                        as: 'user',
+                        model: User,
+                    },
+                    {
+                        attributes: ['criterion_name'],
+                        as: 'criterions',
+                        model: Criterion,
+                    }]
+            })
 
-                    let rating = await Rating.findOne({
-                        where: { user_id: idUsers[i], period_id: lastPeriod, criterion_id: criterions[j], status: true },
-                        attributes: ['rating_score'],
-                        include: [
-                            {
-                                attributes: ['id', 'user_name', 'user_photo'],
-                                as: 'user',
-                                model: User,
-                            },
-                            {
-                                attributes: ['criterion_name'],
-                                as: 'criterions',
-                                model: Criterion,
-                            }]
-                    })
-                    usersEvaluated.push(rating)
-                }
+            // Busca as médias dos usuários
+            for (i = 0; i < idUsers.length; i++) {
                 let average = await Average.findOne({
                     where: { user_id: idUsers[i], period_id: lastPeriod, status: true },
                 })
@@ -806,6 +777,20 @@ module.exports = {
 
             } else {
 
+                // Acha Critérios do Período Ativo
+                const criterionsLastPeriod = await Criterion.findAll({
+                    where: { period_id: lastPeriod, status: true },
+                    attributes: ['id', 'criterion_name']
+                });
+
+                if (criterionsLastPeriod == '' || criterionsLastPeriod == null) {
+                    return res.status(200).json({
+                        success: 0,
+                        lastPeriodName,
+                        message: 'Nenhum Critério cadastrado para este período!'
+                    })
+                }
+
                 for (var i = 0; i < idUsers.length; i++) {
 
                     myTeam[i] = await User.findOne({
@@ -833,6 +818,7 @@ module.exports = {
         } catch (err) {
             return res.status(400).json({ error: err })
         }
+
 
     },
     //Listar Usuários e Médias Associadas - DASHBOARD LÍDER

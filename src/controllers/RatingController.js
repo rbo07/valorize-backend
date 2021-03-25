@@ -326,37 +326,6 @@ module.exports = {
             const lastPeriod = period.id
             const lastPeriodName = period.period_name
 
-            // Acha Critérios do Período Ativo
-            const criterionsLastPeriod = await Criterion.findAll({
-                where: { period_id: lastPeriod, status: true },
-                attributes: ['id', 'criterion_name'],
-                include: [
-                    {
-                        attributes: ['id', 'award_name'],
-                        as: 'awards',
-                        model: Award,
-                    }
-                ]
-            });
-
-            if (criterionsLastPeriod == '' || criterionsLastPeriod == null) {
-                return res.status(200).json({
-                    lastPeriodName,
-                    message: 'Nenhum Critério cadastrado para este período: ' + lastPeriodName
-                })
-            }
-
-            function setToIdCriterions(data) {
-                let size = data.length
-                let ids = []
-
-                for (var i = 0; i < size; i++) {
-                    ids[i] = data[i].id;
-                }
-                return ids
-            }
-            const criterions = setToIdCriterions(criterionsLastPeriod)
-
             // Acha o Team do Usuário
             const team = await Team.findOne({
                 where: { lider_id: user_id, status: true },
@@ -406,20 +375,20 @@ module.exports = {
             // Encontra as avaliações da equipe e suas notas nos critérios do período ativo 
             for (var i = 0; i < idUsers.length; i++) {
 
-                let userScore = []
-                for (var j = 0; j < criterions.length; j++) {
-                    userScore[j] = await Rating.findOne({
-                        where: { user_id: idUsers[i], period_id: lastPeriod, criterion_id: criterions[j], status: true },
-                        attributes: ['user_id', 'period_id', 'criterion_id', 'final_score'],
-                    })
-                }
-                if (!userScore.includes(null)) {
-                    myTeamScores.push({ userScore })
+                let userScore = await Rating.findAll({
+                    where: { user_id: idUsers[i], period_id: lastPeriod, /*criterion_id: criterions[j],*/ status: true },
+                    attributes: ['user_id', 'period_id', 'criterion_id', 'final_score'],
+                })
+
+                if (userScore.length !== 0) {
+                    if (!userScore.includes(null)) {
+                        myTeamScores.push({ userScore })
+                    }
                 }
             }
 
             // Verifica se existem avaliações cadastradas
-            if (myTeamScores == '' || myTeamScores == null) {
+            if (myTeamScores.length == 0) {
                 return res.status(200).json({
                     lastPeriodName,
                     message: 'Nenhuma avaliação cadastrada para esta equipe no período: ' + lastPeriodName
@@ -437,11 +406,14 @@ module.exports = {
 
                     for (let j = 0; j < size2; j++) {
 
-                        let score = data[j].userScore[i].final_score
+                        if (data[j].userScore.length !== 0) {
+                            let score = data[j].userScore[i].final_score
+                            temp.push(score)
+                        }
 
-                        temp.push(score)
                     }
                     result.push(Math.max(...temp))
+
                 }
                 return result
             }
@@ -464,12 +436,14 @@ module.exports = {
                         let user = null
                         let criterion = null
 
-                        user = data[j].userScore[i].user_id
-                        criterion = data[j].userScore[i].criterion_id
-                        score = data[j].userScore[i].final_score
-                        temp = notas[i]
+                        if (data[j].userScore.length !== 0) {
+                            user = data[j].userScore[i].user_id
+                            criterion = data[j].userScore[i].criterion_id
+                            score = data[j].userScore[i].final_score
+                            temp = notas[i]
+                        }
 
-                        if (temp == score) {
+                        if (temp == score && temp !== null) {
                             result.push({ user, score, criterion })
                         }
                     }
@@ -533,6 +507,7 @@ module.exports = {
                 }
             }
 
+            // SE TIVER FINALISTAS JÁ PREMIADOS
             if (awardedUsers.length > 0) {
 
                 return res.status(200).json({
@@ -541,14 +516,39 @@ module.exports = {
                     awardedUsers
                 });
 
+                // SE NINGUEM FOI PREMIADO AINDA
             } else {
-                return res.status(200).json({
-                    success: 1,
-                    lastPeriod,
-                    lastPeriodName,
-                    criterionsLastPeriod,
-                    finalistsWinners,
+
+                //Acha Critérios do Período Ativo
+                const criterionsLastPeriod = await Criterion.findAll({
+                    where: { period_id: lastPeriod, status: true },
+                    attributes: ['id', 'criterion_name'],
+                    include: [
+                        {
+                            attributes: ['id', 'award_name'],
+                            as: 'awards',
+                            model: Award,
+                        }
+                    ]
                 });
+
+                if (criterionsLastPeriod == '' || criterionsLastPeriod == null) {
+                    return res.status(200).json({
+                        lastPeriodName,
+                        message: 'Nenhum Critério cadastrado para este período: ' + lastPeriodName
+                    })
+
+                } else {
+
+                    return res.status(200).json({
+                        success: 1,
+                        lastPeriod,
+                        lastPeriodName,
+                        criterionsLastPeriod,
+                        finalistsWinners,
+                        myTeamScores
+                    });
+                }
             }
 
 
@@ -796,9 +796,9 @@ module.exports = {
                 }
             })
 
-            function checkTiebreak(tiebreak){
-                if(tiebreak == null){
-                    return 0 
+            function checkTiebreak(tiebreak) {
+                if (tiebreak == null) {
+                    return 0
                 } else {
                     return tiebreak.tiebreaker_weight
                 }
