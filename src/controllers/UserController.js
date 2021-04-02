@@ -7,6 +7,7 @@ const Role = require('../models/Role');
 const Rating = require('../models/Rating');
 const Period = require('../models/Period');
 const UserTeam = require('../models/UserTeam');
+const { cloudinary } = require('../cloudinary');
 
 const bcrypt = require('bcryptjs');
 
@@ -1464,6 +1465,12 @@ module.exports = {
                 }
             }
             const user_photo = checkPhoto(req.file)
+
+            const uploadedResponse = await cloudinary.uploader.upload(
+                user_photo, {
+                    upload_preset: 'valorize_avatar'
+                }
+            )
 
             function setParams(user_photo) {
                 if (user_photo !== null) {

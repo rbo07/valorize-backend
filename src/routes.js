@@ -1,25 +1,7 @@
 const express = require('express');
-const multer = require('multer');
+const upload = require('./multer');
 const router = express.Router();
 const authMiddleware = require('./middlewares/auth');
-
-
-// const upload = multer({dest: '/uploads/'})
-
-const storage = multer.diskStorage({
-    destination: './uploads/',
-    filename(req, file, cb) {
-        if(file !== undefined){
-            cb(null, new Date().toISOString()+'-'+file.originalname);
-        }
-    },
-});
-
- const upload = multer({
-    storage: storage,
-    limits:{ fileSize: 1024 * 1024 * 5 },
- });
-
 
 const AverageController = require('./controllers/AverageController');
 const UserController = require('./controllers/UserController');
