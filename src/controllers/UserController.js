@@ -1497,6 +1497,12 @@ module.exports = {
                     }
                 });
 
+                return res.status(200).json({
+                    success: true,
+                    message: 'Usuário Atualizado com Sucesso!',
+                    user,
+                });
+
             } else {
 
                 // ATUALIZA NO BANCO SEM FOTO
@@ -1506,13 +1512,14 @@ module.exports = {
                         status: true
                     }
                 });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Usuário Atualizado com Sucesso!',
+                    user,
+                });
             }
 
-            return res.status(200).json({
-                success: true,
-                message: 'Usuário Atualizado com Sucesso!',
-                user,
-            });
 
         } catch (err) {
             return res.status(400).json({ error: err })
