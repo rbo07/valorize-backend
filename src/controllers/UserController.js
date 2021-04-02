@@ -1456,36 +1456,11 @@ module.exports = {
             const { user_name, user_email, user_address, user_phone, password_user } = req.body;
             const { user_id } = req.params;
 
-            function checkPhoto(data) {
-                let url = req.protocol + '://' + req.get('host')
-                if (data !== undefined) {
-                    return url + '/' + req.file.path
-                } else {
-                    return null
-                }
-            }
-            const user_photo = checkPhoto(req.file)
-
-            const uploadedResponse = await cloudinary.uploader.upload(
-                user_photo, {
-                    upload_preset: 'valorize_avatar'
-                }
-            )
-            const photoUrl = uploadedResponse.secure_url
-
-            function setParams(user_photo) {
-                if (user_photo !== null) {
-                    return { user_photo }
-                } else {
-                    return {}
-                }
-            }
-            const parametros = setParams(photoUrl)
-
+            // VERIFICA SENHA
             function checkPassWord(data) {
-                if(data == '' || data == 'undefined'){
+                if (data == '' || data == 'undefined') {
                     return undefined
-                    
+
                 } else {
                     // CRIPTOGRAFA A SENHA
                     let salt = bcrypt.genSaltSync();
@@ -1496,13 +1471,42 @@ module.exports = {
 
             const user_password = checkPassWord(password_user);
 
-            // ATUALIZA NO BANCO
-            const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, ...parametros }, {
-                where: {
-                    id: user_id,
-                    status: true
+            // VERIFICA FOTO
+            function checkPhoto(data) {
+                let url = req.protocol + '://' + req.get('host')
+                if (data !== undefined) {
+                    return url + '/' + req.file.path
+                } else {
+                    return null
                 }
-            });
+            }
+            const photo = checkPhoto(req.file)
+
+            if (photo !== null) {
+                const uploadedResponse = await cloudinary.uploader.upload(
+                    photo, {
+                    upload_preset: 'valorize_avatar'
+                })
+                const user_photo = uploadedResponse.secure_url
+
+                // ATUALIZA NO BANCO COM FOTO
+                const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, user_photo }, {
+                    where: {
+                        id: user_id,
+                        status: true
+                    }
+                });
+
+            } else {
+
+                // ATUALIZA NO BANCO SEM FOTO
+                const user = await User.update({ user_name, user_email, user_address, user_phone, user_password }, {
+                    where: {
+                        id: user_id,
+                        status: true
+                    }
+                });
+            }
 
             return res.status(200).json({
                 success: true,
