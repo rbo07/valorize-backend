@@ -1471,15 +1471,16 @@ module.exports = {
                     upload_preset: 'valorize_avatar'
                 }
             )
+            const photoUrl = uploadedResponse.secure_url
 
-            function setParams(user_photo) {
-                if (user_photo !== null) {
-                    return { user_photo }
+            function setParams(data) {
+                if (data !== null) {
+                    return { data }
                 } else {
                     return {}
                 }
             }
-            const parametros = setParams(user_photo)
+            const parametros = setParams(photoUrl)
 
             function checkPassWord(data) {
                 if(data == '' || data == 'undefined'){
