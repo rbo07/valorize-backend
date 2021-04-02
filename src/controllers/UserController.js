@@ -1473,9 +1473,9 @@ module.exports = {
             )
             const photoUrl = uploadedResponse.secure_url
 
-            function setParams(data) {
-                if (data !== null) {
-                    return { data }
+            function setParams(user_photo) {
+                if (user_photo !== null) {
+                    return { user_photo }
                 } else {
                     return {}
                 }
