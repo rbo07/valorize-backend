@@ -1392,47 +1392,81 @@ module.exports = {
                     const user_photo = uploadedResponse.secure_url
 
                     // GRAVA NO BANCO COM FOTO
-                    const user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, user_photo, status: true, });
+                    let user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, user_photo, status: true, });
+
+                    if (id_team !== 'null') {
+
+
+                        const team_id = Number(id_team)
+                        let user_id = user.id
+
+                        await UserTeam.create({ user_id, team_id, status: true });
+
+                        // Checa se o usuário é líder
+                        const role = await Role.findOne({ where: { id: role_id, status: true }, })
+
+                        function checkRoleIsNull(role) {
+                            if (role == null) {
+                                return null
+                            } else {
+                                return role.role_access
+                            }
+                        }
+
+                        const roleAccess = checkRoleIsNull(role)
+
+                        if (roleAccess == 2) {
+                            await Team.update({ lider_id: user_id }, {
+                                where: { id: team_id, status: true },
+                            })
+                        }
+
+                        return res.status(200).json({
+                            success: true,
+                            roleAccess,
+                            message: 'Usuario cadastrado com sucesso!',
+                        })
+                    }
 
                 } else {
 
                     // GRAVA NO BANCO SEM FOTO
-                    const user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, status: true, });
+                    let user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, status: true, });
 
-                }
-
-                if (id_team !== 'null') {
+                    if (id_team !== 'null') {
 
 
-                    const team_id = Number(id_team)
-                    let user_id = user.id
+                        const team_id = Number(id_team)
+                        let user_id = user.id
 
-                    await UserTeam.create({ user_id, team_id, status: true });
+                        await UserTeam.create({ user_id, team_id, status: true });
 
-                    // Checa se o usuário é líder
-                    const role = await Role.findOne({ where: { id: role_id, status: true }, })
+                        // Checa se o usuário é líder
+                        const role = await Role.findOne({ where: { id: role_id, status: true }, })
 
-                    function checkRoleIsNull(role) {
-                        if (role == null) {
-                            return null
-                        } else {
-                            return role.role_access
+                        function checkRoleIsNull(role) {
+                            if (role == null) {
+                                return null
+                            } else {
+                                return role.role_access
+                            }
                         }
-                    }
 
-                    const roleAccess = checkRoleIsNull(role)
+                        const roleAccess = checkRoleIsNull(role)
 
-                    if (roleAccess == 2) {
-                        await Team.update({ lider_id: user_id }, {
-                            where: { id: team_id, status: true },
+                        if (roleAccess == 2) {
+                            await Team.update({ lider_id: user_id }, {
+                                where: { id: team_id, status: true },
+                            })
+                        }
+
+                        return res.status(200).json({
+                            success: true,
+                            roleAccess,
+                            message: 'Usuario cadastrado com sucesso!',
                         })
                     }
 
-                    return res.status(200).json({
-                        success: true,
-                        roleAccess,
-                        message: 'Usuario cadastrado com sucesso!',
-                    })
                 }
 
                 return res.status(200).json({
