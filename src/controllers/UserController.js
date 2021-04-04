@@ -8,7 +8,6 @@ const Rating = require('../models/Rating');
 const Period = require('../models/Period');
 const UserTeam = require('../models/UserTeam');
 const { cloudinary } = require('../cloudinary');
-// const CheckPhoto = require('../checkPhoto');
 
 const bcrypt = require('bcryptjs');
 
@@ -1359,33 +1358,6 @@ module.exports = {
 
             } else {
 
-                // VERIFICA FOTO
-                function checkPhoto(data) {
-                    let url = req.protocol + '://' + req.get('host')
-                    if (data !== undefined) {
-                        return url + '/' + req.file.path
-                    } else {
-                        return null
-                    }
-                }
-
-                async function setParamsPhoto(data) {
-                    if (data !== null) {
-                        const uploadedResponse = await cloudinary.uploader.upload(
-                            data, {
-                            upload_preset: 'valorize_avatar'
-                        })
-                        const user_photo = uploadedResponse.secure_url
-                        return { user_photo }
-                
-                    } else {
-                        return {}
-                    }
-                }
-
-                const photo = checkPhoto(req.file)
-                const photoParams = setParamsPhoto(photo)
-
                 // CRIPTOGRAFA A SENHA
                 const salt = bcrypt.genSaltSync();
                 const user_password = bcrypt.hashSync(password_user, salt);
@@ -1400,9 +1372,34 @@ module.exports = {
 
                 const roleId = checkRoleIDIsNull(role_id)
 
-                // GRAVA NO BANCO
-                const user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, status: true, ...photoParams });
+                // VERIFICA FOTO
+                function checkPhoto(data) {
+                    let url = req.protocol + '://' + req.get('host')
+                    if (data !== undefined) {
+                        return url + '/' + req.file.path
+                    } else {
+                        return null
+                    }
+                }
 
+                const photo = checkPhoto(req.file)
+
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
+
+                    // GRAVA NO BANCO COM FOTO
+                    const user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, user_photo, status: true, });
+
+                } else {
+
+                    // GRAVA NO BANCO SEM FOTO
+                    const user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, status: true, });
+
+                }
 
                 if (id_team !== 'null') {
 
@@ -1484,36 +1481,44 @@ module.exports = {
                 }
             }
 
-            async function setParamsPhoto(data) {
-                if (data !== null) {
-                    const uploadedResponse = await cloudinary.uploader.upload(
-                        data, {
-                        upload_preset: 'valorize_avatar'
-                    })
-                    const user_photo = uploadedResponse.secure_url
-                    return { user_photo }
-            
-                } else {
-                    return {}
-                }
-            }
-
             const photo = checkPhoto(req.file)
-            const photoParams = setParamsPhoto(photo)
 
-            // ATUALIZA NO BANCO COM FOTO
-            const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, ...photoParams }, {
-                where: {
-                    id: user_id,
-                    status: true
-                }
-            });
+            if (photo !== null) {
+                const uploadedResponse = await cloudinary.uploader.upload(
+                    photo, {
+                    upload_preset: 'valorize_avatar'
+                })
+                const user_photo = uploadedResponse.secure_url
 
-            return res.status(200).json({
-                success: true,
-                message: 'Usuário Atualizado com Sucesso!',
-                user,
-            });
+                // ATUALIZA NO BANCO COM FOTO
+                const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, user_photo }, {
+                    where: {
+                        id: user_id,
+                        status: true
+                    }
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Usuário Atualizado com Sucesso!',
+                    user,
+                });
+
+            } else {
+                // ATUALIZA NO BANCO SEM FOTO
+                const user = await User.update({ user_name, user_email, user_address, user_phone, user_password }, {
+                    where: {
+                        id: user_id,
+                        status: true
+                    }
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Usuário Atualizado com Sucesso!',
+                    user,
+                });
+            }
 
         } catch (err) {
             return res.status(400).json({ error: err })
