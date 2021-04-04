@@ -1597,7 +1597,7 @@ module.exports = {
             const { user_name, user_email, user_phone, user_address, role_id, team_id, team_current, role_current, password_user } = req.body;
             const { user_id } = req.params;
 
-            // 1 - Checar se vem Foto
+            // VERIFICA FOTO
             function checkPhoto(data) {
                 let url = req.protocol + '://' + req.get('host')
                 if (data !== undefined) {
@@ -1606,16 +1606,6 @@ module.exports = {
                     return null
                 }
             }
-            const user_photo = checkPhoto(req.file)
-
-            function setParams(user_photo) {
-                if (user_photo !== null) {
-                    return { user_photo }
-                } else {
-                    return {}
-                }
-            }
-            const photo_params = setParams(user_photo)
 
             // 1 - Checar se vem Função e Equipe retorna um objeto para ser usado nos parametros
             function checkData(role_id) {
@@ -1673,180 +1663,456 @@ module.exports = {
 
             // ////////// USUÁRIO SEM EQUIPE PERMANECE SEM EQUIPE ////////// //
             if (team == null && teamCurrent == null) {
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                const photo = checkPhoto(req.file)
+
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
+
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                } else {
+
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                }
+
             }
             // ////////// USUÁRIO PERMANECE NA MESMA EQUIPE E É PROMOVIDO PRA LÍDER
             else if (team == teamCurrent && (role_access_current == 3 && role_access == 2 || role_access_current == null && role_access == 2)) {
 
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
+                const photo = checkPhoto(req.file)
 
-                // Atualiza na tabela de Team
-                await Team.update({ lider_id: user_id }, {
-                    where: { id: team_id, status: true },
-                })
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    // Atualiza na tabela de Team
+                    await Team.update({ lider_id: user_id }, {
+                        where: { id: team_id, status: true },
+                    })
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                } else {
+
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    // Atualiza na tabela de Team
+                    await Team.update({ lider_id: user_id }, {
+                        where: { id: team_id, status: true },
+                    })
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                }
+
 
                 // ////////// USUÁRIO PERMANECE NA MESMA EQUIPE E É REBAIXADO
             } else if (team == teamCurrent && (role_access_current == 2 && role_access == 3)) {
 
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
+                const photo = checkPhoto(req.file)
 
-                // Seta para Null na equipe anterior
-                await Team.update({ lider_id: null }, {
-                    where: { lider_id: user_id, status: true },
-                })
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    // Seta para Null na equipe anterior
+                    await Team.update({ lider_id: null }, {
+                        where: { lider_id: user_id, status: true },
+                    })
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                } else {
+
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    // Seta para Null na equipe anterior
+                    await Team.update({ lider_id: null }, {
+                        where: { lider_id: user_id, status: true },
+                    })
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                }
 
                 // ////////// USUÁRIO PERMANECE NA MESMA EQUIPE SEM MUDANÇA DE FUNÇÃO
             } else if (team == teamCurrent || team == null) {
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                const photo = checkPhoto(req.file)
+
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
+
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                } else {
+
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                }
+
 
                 // ////////// USUÁRIO MUDA DE EQUIPE SEM MUDANÇA DE FUNÇÃO OU ADERINDO A FUNÇÃO BÁSICA
             } else if (team !== teamCurrent && (role_access_current == null && role_access == null || role_access_current == 3 && role_access == 3 || role_access_current == null && role_access == 3)) {
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
 
-                // Remove a associação com os Time anterior
-                await UserTeam.destroy({
-                    where: { user_id }
-                });
+                const photo = checkPhoto(req.file)
 
-                // Cria uma nova associação
-                await UserTeam.create({ user_id, team_id, status: true });
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                } else {
+
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+                }
+
 
                 // ////////// USUÁRIO MUDA DE EQUIPE SENDO PROMOVIDO A LÍDER OU ADQUIRE A FUNÇÃO DE LÍDER
             } else if (team !== teamCurrent && (role_access_current == 3 && role_access == 2 || role_access_current == null && role_access == 2)) {
 
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
+                const photo = checkPhoto(req.file)
 
-                // Atualiza na tabela de Team
-                await Team.update({ lider_id: user_id }, {
-                    where: { id: team_id, status: true },
-                })
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
 
-                // Remove a associação com os Time anterior
-                await UserTeam.destroy({
-                    where: { user_id }
-                });
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    // Atualiza na tabela de Team
+                    await Team.update({ lider_id: user_id }, {
+                        where: { id: team_id, status: true },
+                    })
+    
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+    
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
 
-                // Cria uma nova associação
-                await UserTeam.create({ user_id, team_id, status: true });
+                } else {
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    // Atualiza na tabela de Team
+                    await Team.update({ lider_id: user_id }, {
+                        where: { id: team_id, status: true },
+                    })
+    
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+    
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                }
+
 
                 // ////////// USUÁRIO MUDA DE EQUIPE E PERMANECE NA FUNÇÃO DE LÍDER
             } else if (team !== teamCurrent && (role_access_current == 2 && role_access == 2)) {
 
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
+                const photo = checkPhoto(req.file)
 
-                // Seta para Null na equipe anterior
-                await Team.update({ lider_id: null }, {
-                    where: { lider_id: user_id, status: true },
-                })
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
 
-                // Atualiza na tabela de Team
-                await Team.update({ lider_id: user_id }, {
-                    where: { id: team_id, status: true },
-                })
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    // Seta para Null na equipe anterior
+                    await Team.update({ lider_id: null }, {
+                        where: { lider_id: user_id, status: true },
+                    })
+    
+                    // Atualiza na tabela de Team
+                    await Team.update({ lider_id: user_id }, {
+                        where: { id: team_id, status: true },
+                    })
+    
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+    
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
 
-                // Remove a associação com os Time anterior
-                await UserTeam.destroy({
-                    where: { user_id }
-                });
+                } else {
 
-                // Cria uma nova associação
-                await UserTeam.create({ user_id, team_id, status: true });
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    // Seta para Null na equipe anterior
+                    await Team.update({ lider_id: null }, {
+                        where: { lider_id: user_id, status: true },
+                    })
+    
+                    // Atualiza na tabela de Team
+                    await Team.update({ lider_id: user_id }, {
+                        where: { id: team_id, status: true },
+                    })
+    
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+    
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                }
+
 
                 // ////////// USUÁRIO MUDA DE EQUIPE E É REBAIXADO
             } else if (team !== teamCurrent && (role_access_current == 2 && role_access == 3)) {
 
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
+                const photo = checkPhoto(req.file)
 
-                // Seta para Null na equipe anterior
-                await Team.update({ lider_id: null }, {
-                    where: { lider_id: user_id, status: true },
-                })
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
 
-                // Remove a associação com os Time anterior
-                await UserTeam.destroy({
-                    where: { user_id }
-                });
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    // Seta para Null na equipe anterior
+                    await Team.update({ lider_id: null }, {
+                        where: { lider_id: user_id, status: true },
+                    })
+    
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+    
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
 
-                // Cria uma nova associação
-                await UserTeam.create({ user_id, team_id, status: true });
+                } else {
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    // Seta para Null na equipe anterior
+                    await Team.update({ lider_id: null }, {
+                        where: { lider_id: user_id, status: true },
+                    })
+    
+                    // Remove a associação com os Time anterior
+                    await UserTeam.destroy({
+                        where: { user_id }
+                    });
+    
+                    // Cria uma nova associação
+                    await UserTeam.create({ user_id, team_id, status: true });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
 
-                // ////////// QUALQUER OUTRA ALTERAÇÃO NOS DADOS DO USUÁRIO
+                }
+
+
+            // ////////// QUALQUER OUTRA ALTERAÇÃO NOS DADOS DO USUÁRIO
             } else {
 
-                // Atualizar os dados de usuário
-                await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params, ...photo_params }, {
-                    where: { id: user_id, status: true }
-                });
+                const photo = checkPhoto(req.file)
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                })
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
 
+                    // Atualizar os dados de usuário COM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, user_photo, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+
+                } else {
+
+                    // Atualizar os dados de usuário SEM FOTO
+                    await User.update({ user_name, user_email, user_phone, user_password, user_address, ...role_params }, {
+                        where: { id: user_id, status: true }
+                    });
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuário Atualizado com Sucesso!',
+                    })
+                }
             }
 
 
