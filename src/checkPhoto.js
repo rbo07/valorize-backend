@@ -1,22 +1,22 @@
-const { cloudinary } = require('./cloudinary');
+// const { cloudinary } = require('./cloudinary');
 
 
-class CheckPhoto {
+// class CheckPhoto {
 
-    async setParamsPhoto(data) {
+//     async setParamsPhoto(data) {
 
-        if (data !== null) {
-            const uploadedResponse = await cloudinary.uploader.upload(
-                data, {
-                upload_preset: 'valorize_avatar'
-            })
-            const user_photo = uploadedResponse.secure_url
-            return { user_photo }
+//         if (data !== null) {
+//             const uploadedResponse = await cloudinary.uploader.upload(
+//                 data, {
+//                 upload_preset: 'valorize_avatar'
+//             })
+//             const user_photo = uploadedResponse.secure_url
+//             return { user_photo }
 
-        } else {
-            return {}
-        }
-    }
-}
+//         } else {
+//             return {}
+//         }
+//     }
+// }
 
-export default new CheckPhoto();
+// export default new CheckPhoto();

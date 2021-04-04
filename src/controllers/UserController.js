@@ -7,7 +7,8 @@ const Role = require('../models/Role');
 const Rating = require('../models/Rating');
 const Period = require('../models/Period');
 const UserTeam = require('../models/UserTeam');
-const CheckPhoto = require('../checkPhoto');
+const { cloudinary } = require('../cloudinary');
+// const CheckPhoto = require('../checkPhoto');
 
 const bcrypt = require('bcryptjs');
 
@@ -22,6 +23,20 @@ function generateToken(params = {}) {
         // valor em segundos (21,75 Horas)
         expiresIn: 78300,
     });
+}
+
+async function setParamsPhoto(data) {
+    if (data !== null) {
+        const uploadedResponse = await cloudinary.uploader.upload(
+            data, {
+            upload_preset: 'valorize_avatar'
+        })
+        const user_photo = uploadedResponse.secure_url
+        return { user_photo }
+
+    } else {
+        return {}
+    }
 }
 
 
@@ -1370,7 +1385,7 @@ module.exports = {
                 }
 
                 const photo = checkPhoto(req.file)
-                const photoParams = CheckPhoto.setParamsPhoto(photo)
+                const photoParams = setParamsPhoto(photo)
 
                 // CRIPTOGRAFA A SENHA
                 const salt = bcrypt.genSaltSync();
@@ -1471,7 +1486,7 @@ module.exports = {
             }
 
             const photo = checkPhoto(req.file)
-            const photoParams = CheckPhoto.setParamsPhoto(photo)
+            const photoParams = setParamsPhoto(photo)
 
             // ATUALIZA NO BANCO COM FOTO
             const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, ...photoParams }, {
