@@ -25,21 +25,6 @@ function generateToken(params = {}) {
     });
 }
 
-async function setParamsPhoto(data) {
-    if (data !== null) {
-        const uploadedResponse = await cloudinary.uploader.upload(
-            data, {
-            upload_preset: 'valorize_avatar'
-        })
-        const user_photo = uploadedResponse.secure_url
-        return { user_photo }
-
-    } else {
-        return {}
-    }
-}
-
-
 module.exports = {
     //Login
     async login(req, res) {
@@ -1384,6 +1369,20 @@ module.exports = {
                     }
                 }
 
+                async function setParamsPhoto(data) {
+                    if (data !== null) {
+                        const uploadedResponse = await cloudinary.uploader.upload(
+                            data, {
+                            upload_preset: 'valorize_avatar'
+                        })
+                        const user_photo = uploadedResponse.secure_url
+                        return { user_photo }
+                
+                    } else {
+                        return {}
+                    }
+                }
+
                 const photo = checkPhoto(req.file)
                 const photoParams = setParamsPhoto(photo)
 
@@ -1482,6 +1481,20 @@ module.exports = {
                     return url + '/' + req.file.path
                 } else {
                     return null
+                }
+            }
+
+            async function setParamsPhoto(data) {
+                if (data !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        data, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
+                    return { user_photo }
+            
+                } else {
+                    return {}
                 }
             }
 
