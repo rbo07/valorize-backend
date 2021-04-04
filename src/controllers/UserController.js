@@ -1273,12 +1273,7 @@ module.exports = {
 
         try {
 
-            // const path = req.file.path;
-
             const { user_name, user_email, user_address, user_phone, password_user } = req.body;
-
-            const url = req.protocol + '://' + req.get('host')
-            const user_photo = url + '/' + req.file.path
 
             const userEmail = await User.findOne({
                 where: { user_email, status: true },
@@ -1307,17 +1302,52 @@ module.exports = {
 
             } else {
 
-                //CRIPTOGRAFA A SENHA
-                const salt = bcrypt.genSaltSync();
-                const user_password = bcrypt.hashSync(password_user, salt);
+                // VERIFICA FOTO
+                function checkPhoto(data) {
+                    let url = req.protocol + '://' + req.get('host')
+                    if (data !== undefined) {
+                        return url + '/' + req.file.path
+                    } else {
+                        return null
+                    }
+                }
 
-                // GRAVA NO BANCO
-                await User.create({ user_name, user_email, user_address, user_phone, user_password, user_photo, status: true });
+                const photo = checkPhoto(req.file)
 
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuario cadastrado com sucesso!'
-                })
+                if (photo !== null) {
+                    const uploadedResponse = await cloudinary.uploader.upload(
+                        photo, {
+                        upload_preset: 'valorize_avatar'
+                    })
+                    const user_photo = uploadedResponse.secure_url
+
+                    //CRIPTOGRAFA A SENHA
+                    const salt = bcrypt.genSaltSync();
+                    const user_password = bcrypt.hashSync(password_user, salt);
+
+                    // GRAVA NO BANCO COM FOTO
+                    await User.create({ user_name, user_email, user_address, user_phone, user_password, user_photo, status: true });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuario cadastrado com sucesso!'
+                    })
+
+                } else {
+
+                    //CRIPTOGRAFA A SENHA
+                    const salt = bcrypt.genSaltSync();
+                    const user_password = bcrypt.hashSync(password_user, salt);
+
+                    // GRAVA NO BANCO SEM FOTO
+                    await User.create({ user_name, user_email, user_address, user_phone, user_password, status: true });
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Usuario cadastrado com sucesso!'
+                    })
+
+                }
             }
 
         } catch (err) {
