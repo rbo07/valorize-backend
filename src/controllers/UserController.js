@@ -7,8 +7,7 @@ const Role = require('../models/Role');
 const Rating = require('../models/Rating');
 const Period = require('../models/Period');
 const UserTeam = require('../models/UserTeam');
-const { cloudinary } = require('../cloudinary');
-const CheckPhoto = require('../checkPhoto')
+const CheckPhoto = require('../checkPhoto');
 
 const bcrypt = require('bcryptjs');
 

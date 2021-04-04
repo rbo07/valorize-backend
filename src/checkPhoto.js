@@ -1,3 +1,6 @@
+const { cloudinary } = require('./cloudinary');
+
+
 class CheckPhoto {
 
     async setParamsPhoto(data) {
