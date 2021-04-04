@@ -8,6 +8,7 @@ const Rating = require('../models/Rating');
 const Period = require('../models/Period');
 const UserTeam = require('../models/UserTeam');
 const { cloudinary } = require('../cloudinary');
+const CheckPhoto = require('../checkPhoto')
 
 const bcrypt = require('bcryptjs');
 
@@ -1332,30 +1333,6 @@ module.exports = {
         try {
             const { user_name, user_email, user_address, user_phone, id_team, role_id, password_user } = req.body;
 
-            // const url = req.protocol + '://' + req.get('host')
-            // const user_photo = url + '/' + req.file.path
-
-            function checkPhoto(data) {
-                let url = req.protocol + '://' + req.get('host')
-                if (data !== undefined) {
-                    return url + '/' + req.file.path
-                } else {
-                    return null
-                }
-            }
-            const user_photo = checkPhoto(req.file)
-
-            function setParams(user_photo) {
-                if (user_photo !== null) {
-                    return { user_photo }
-                } else {
-                    return {}
-                }
-            }
-            const parametros = setParams(user_photo)
-
-            // *** ///
-
             const userEmail = await User.findOne({
                 where: { user_email, status: true },
                 attributes: ['user_email'],
@@ -1383,6 +1360,19 @@ module.exports = {
 
             } else {
 
+                // VERIFICA FOTO
+                function checkPhoto(data) {
+                    let url = req.protocol + '://' + req.get('host')
+                    if (data !== undefined) {
+                        return url + '/' + req.file.path
+                    } else {
+                        return null
+                    }
+                }
+
+                const photo = checkPhoto(req.file)
+                const photoParams = CheckPhoto.setParamsPhoto(photo)
+
                 // CRIPTOGRAFA A SENHA
                 const salt = bcrypt.genSaltSync();
                 const user_password = bcrypt.hashSync(password_user, salt);
@@ -1398,7 +1388,7 @@ module.exports = {
                 const roleId = checkRoleIDIsNull(role_id)
 
                 // GRAVA NO BANCO
-                const user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, status: true, ...parametros });
+                const user = await User.create({ user_name, user_email, user_address, user_phone, role_id: roleId, user_password, status: true, ...photoParams });
 
 
                 if (id_team !== 'null') {
@@ -1480,46 +1470,23 @@ module.exports = {
                     return null
                 }
             }
+
             const photo = checkPhoto(req.file)
+            const photoParams = CheckPhoto.setParamsPhoto(photo)
 
-            if (photo !== null) {
-                const uploadedResponse = await cloudinary.uploader.upload(
-                    photo, {
-                    upload_preset: 'valorize_avatar'
-                })
-                const user_photo = uploadedResponse.secure_url
+            // ATUALIZA NO BANCO COM FOTO
+            const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, ...photoParams }, {
+                where: {
+                    id: user_id,
+                    status: true
+                }
+            });
 
-                // ATUALIZA NO BANCO COM FOTO
-                const user = await User.update({ user_name, user_email, user_address, user_phone, user_password, user_photo }, {
-                    where: {
-                        id: user_id,
-                        status: true
-                    }
-                });
-
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                    user,
-                });
-
-            } else {
-
-                // ATUALIZA NO BANCO SEM FOTO
-                const user = await User.update({ user_name, user_email, user_address, user_phone, user_password }, {
-                    where: {
-                        id: user_id,
-                        status: true
-                    }
-                });
-
-                return res.status(200).json({
-                    success: true,
-                    message: 'Usuário Atualizado com Sucesso!',
-                    user,
-                });
-            }
-
+            return res.status(200).json({
+                success: true,
+                message: 'Usuário Atualizado com Sucesso!',
+                user,
+            });
 
         } catch (err) {
             return res.status(400).json({ error: err })
@@ -1580,7 +1547,7 @@ module.exports = {
             }
 
             function checkPassWord(data) {
-                if(data == '' || data == 'undefined'){
+                if (data == '' || data == 'undefined') {
                     return undefined
 
                 } else {
