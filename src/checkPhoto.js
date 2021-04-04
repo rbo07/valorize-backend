@@ -1,6 +1,6 @@
 class CheckPhoto {
 
-    setParamsPhoto(data) {
+    async setParamsPhoto(data) {
 
         if (data !== null) {
             const uploadedResponse = await cloudinary.uploader.upload(
